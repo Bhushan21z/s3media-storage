@@ -10,7 +10,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Upload File to S3</h1>
+        <h1>Upload Files to S3</h1>
         {% with messages = get_flashed_messages() %}
             {% if messages %}
                 <ul>
@@ -21,7 +21,7 @@
             {% endif %}
         {% endwith %}
         <form method="POST" enctype="multipart/form-data">
-            <input type="file" name="file">
+            <input type="file" name="files" multiple>
             <input type="submit" value="Upload">
         </form>
     </div>

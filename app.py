@@ -19,21 +19,23 @@ s3_client = boto3.client(
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        if 'file' not in request.files:
-            flash('No file part')
+        if 'files' not in request.files:
+            flash('No files part')
             return redirect(request.url)
         
-        file = request.files['file']
+        files = request.files.getlist('files')
 
-        if file.filename == '':
-            flash('No selected file')
+        if len(files) == 0 or files[0].filename == '':
+            flash('No selected files')
             return redirect(request.url)
 
-        if file:
-            file_name = file.filename
-            s3_client.upload_fileobj(file, Config.S3_BUCKET, file_name)
-            flash('File successfully uploaded to S3')
-            return redirect(url_for('index'))
+        for file in files:
+            if file:
+                file_name = file.filename
+                s3_client.upload_fileobj(file, Config.S3_BUCKET, file_name)
+                flash(f'{file_name} successfully uploaded to S3')
+
+        return redirect(url_for('index'))
 
     return render_template('index.html')
 
