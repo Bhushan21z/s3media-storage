@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FTP Upload</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container-fluid main-container">
+        <div class="upload-container">
+            <h2 class="text-center mb-4">Upload Your Files</h2>
+
+            <!-- Tab navigation -->
+            <ul class="nav nav-tabs mb-4" id="uploadTabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link" id="s3-tab" href="/s3_upload" role="tab" aria-controls="s3" aria-selected="false">S3</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="gphotos-tab" href="/google_upload" role="tab" aria-controls="gphotos" aria-selected="false">PHOTOS</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="ipfs-tab" href="/ipfs_upload" role="tab" aria-controls="ipfs" aria-selected="false">IPFS</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" id="ftp-tab" data-toggle="tab" href="#ftp" role="tab" aria-controls="ftp" aria-selected="true">FTP</a>
+                </li>
+            </ul>
+
+            <!-- Tab content -->
+            <div class="tab-content" id="uploadTabsContent">
+                <!-- FTP Upload -->
+                <div class="tab-pane fade show active" id="ftp" role="tabpanel" aria-labelledby="ftp-tab">
+                    <div class="text-center mt-5">
+                        <h4>FTP Upload is not available right now.</h4>
+                        <p>We are working on it. Please check back later.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flash messages -->
+            <div class="mt-3">
+                {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="alert alert-info" role="alert">
+                        <ul>
+                        {% for message in messages %}
+                            <li>{{ message }}</li>
+                        {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        // Update the label text of the file input with the selected file names
+        $(".custom-file-input").on("change", function() {
+            let fileNames = Array.from(this.files).map(file => file.name).join(", ");
+            $(this).next(".custom-file-label").html(fileNames);
+        });
+    </script>
+</body>
+</html>
