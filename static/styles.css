@@ -1,49 +1,32 @@
-/* static/styles.css */
-
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f7f7f7;
+body, html {
+    height: 100%;
+}
+.main-container {
+    height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
 }
-
-.container {
-    background-color: #fff;
+.upload-container {
+    max-width: 500px;
+    width: 100%;
     padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    background-color: #f9f9f9;
 }
-
-h1 {
-    margin-bottom: 20px;
+.custom-file-label::after {
+    content: "Browse";
 }
-
-form {
-    display: flex;
-    flex-direction: column;
+.nav-tabs {
+    border-bottom: 1px solid #dee2e6;
 }
-
-input[type="file"] {
-    margin-bottom: 10px;
+.nav-item {
+    flex: 1;
 }
-
-input[type="submit"] {
-    padding: 10px;
-    background-color: #007BFF;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+.nav-link {
+    text-align: center;
 }
-
-input[type="submit"]:hover {
-    background-color: #0056b3;
-}
-
-ul {
-    list-style: none;
-    padding: 0;
-    color: green;
+.tab-content {
+    margin-top: 20px;
 }
