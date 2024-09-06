@@ -7,8 +7,15 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 import requests
+import json
 
 app = Flask(__name__)
+
+google_credentials = os.getenv('GOOGLE_PHOTOS_CREDENTIALS')
+if google_credentials:
+    with open('/tmp/google_photos_credentials.json', 'w') as creds_file:
+        creds_file.write(google_credentials)
+
 app.config.from_object(Config)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
@@ -147,15 +154,8 @@ def google_upload():
 @app.route('/s3_upload', methods=['GET', 'POST'])
 def s3_upload():
     if request.method == 'POST':
-        storage_service = request.form.get('storage-service')
-
-        if storage_service == 's3':
-            files = request.files.getlist('file')
-            upload_to_s3(files)
-        elif storage_service == 'gphotos':
-            return redirect(url_for('login'))
-        else:
-            flash('Invalid storage service selected!')
+        files = request.files.getlist('file')
+        upload_to_s3(files)
 
     return render_template('s3_upload.html')
 
@@ -172,4 +172,4 @@ def index():
     return redirect(url_for('s3_upload'))
 
 if __name__ == '__main__':
-    app.run(port=5000, debug=True)
+    app.run(port=5000, debug=False)
