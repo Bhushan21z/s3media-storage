@@ -13,3 +13,5 @@ class Config:
     S3_BUCKET = os.getenv('S3_BUCKET')
     S3_REGION = os.getenv('S3_REGION')
     GOOGLE_PHOTOS_CREDENTIALS_FILE = '/tmp/google_photos_credentials.json'
+    UPLOAD_FOLDER = 'tmp/uploads'
+    REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
