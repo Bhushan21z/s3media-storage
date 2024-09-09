@@ -1,6 +1,5 @@
 import os
 import boto3
-import google.auth
 from flask import Flask, render_template, request, flash, redirect, url_for, session
 from config import Config
 from google.oauth2.credentials import Credentials
@@ -8,16 +7,28 @@ from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 import requests
 import json
+from werkzeug.utils import secure_filename
+import uuid
+from celery_worker import make_celery
+from tasks import upload_file_to_s3
 
 app = Flask(__name__)
+app.config.from_object(Config)
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+app.config['UPLOAD_FOLDER'] = 'tmp/uploads'
 
 google_credentials = os.getenv('GOOGLE_PHOTOS_CREDENTIALS')
 if google_credentials:
     with open('/tmp/google_photos_credentials.json', 'w') as creds_file:
         creds_file.write(google_credentials)
 
-app.config.from_object(Config)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+# Ensure the upload folder exists
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# Configure Celery
+app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
+app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
+celery = make_celery(app)
 
 # OAuth Scopes for Google Photos API
 SCOPES = ['https://www.googleapis.com/auth/photoslibrary.readonly', 
@@ -83,18 +94,6 @@ def create_media_item(service, upload_token, file_name):
     }
     service.mediaItems().batchCreate(body=new_media_item).execute()
 
-def upload_to_s3(files):
-    s3 = boto3.client(
-        's3',
-        aws_access_key_id=app.config['AWS_ACCESS_KEY_ID'],
-        aws_secret_access_key=app.config['AWS_SECRET_ACCESS_KEY'],
-        region_name=app.config['S3_REGION']
-    )
-    for file in files:
-        file_name = file.filename
-        s3.upload_fileobj(file, app.config['S3_BUCKET'], file_name)
-        flash(f'Successfully uploaded {file_name} to S3!')
-
 @app.route('/login')
 def login():
     # Create OAuth flow instance
@@ -155,8 +154,21 @@ def google_upload():
 def s3_upload():
     if request.method == 'POST':
         files = request.files.getlist('file')
-        upload_to_s3(files)
-
+        for file in files:
+            if file:
+                filename = secure_filename(file.filename)
+                unique_filename = f"{uuid.uuid4()}_{filename}"
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                file.save(file_path)
+                upload_file_to_s3.delay(
+                        file_path, 
+                        filename,
+                        app.config['AWS_ACCESS_KEY_ID'],
+                        app.config['AWS_SECRET_ACCESS_KEY'],
+                        app.config['S3_REGION'],
+                        app.config['S3_BUCKET']
+                    )
+        flash('Files are being processed and will be uploaded to S3 shortly!')
     return render_template('s3_upload.html')
 
 @app.route('/ipfs_upload', methods=['GET', 'POST'])
