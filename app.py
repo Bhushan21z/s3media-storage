@@ -35,7 +35,7 @@ SCOPES = ['https://www.googleapis.com/auth/photoslibrary.readonly',
           'https://www.googleapis.com/auth/photoslibrary.appendonly']
 
 # Allow insecure transport for local development (disable in production)
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+# os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 def get_google_photos_service():
     if 'credentials' not in session:

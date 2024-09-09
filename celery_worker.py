@@ -1,8 +1,11 @@
 import os
 from celery import Celery
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def make_celery(app=None):
-    redis_url = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+    redis_url = os.environ.get(os.getenv('REDIS_URL'), 'redis://localhost:6379/0')
     celery = Celery(
         'tasks',
         broker=redis_url,
