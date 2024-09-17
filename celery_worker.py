@@ -5,14 +5,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def make_celery(app=None):
-    redis_url = os.environ.get(os.getenv('REDIS_URL'), 'redis://localhost:6379/0')
+    redis_url = os.getenv('REDIS_URL')
     celery = Celery(
         'tasks',
         broker=redis_url,
         backend=redis_url,
         include=['tasks']
     )
-    
+
     if app:
         celery.conf.update(app.config)
 
