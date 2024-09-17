@@ -11,6 +11,7 @@ from werkzeug.utils import secure_filename
 import uuid
 from celery_worker import make_celery
 from tasks import upload_file_to_s3
+from tasks import upload_file_to_google_photos
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -36,63 +37,6 @@ SCOPES = ['https://www.googleapis.com/auth/photoslibrary.readonly',
 
 # Allow insecure transport for local development (disable in production)
 # os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-
-def get_google_photos_service():
-    if 'credentials' not in session:
-        return None
-
-    creds = Credentials(
-        token=session['credentials']['token'],
-        refresh_token=session['credentials'].get('refresh_token'),
-        token_uri=session['credentials']['token_uri'],
-        client_id=session['credentials']['client_id'],
-        client_secret=session['credentials']['client_secret'],
-        scopes=session['credentials']['scopes']
-    )
-
-    return build('photoslibrary', 'v1', credentials=creds, static_discovery=False)
-
-def upload_to_google_photos(files):
-    service = get_google_photos_service()
-
-    if not service:
-        flash("You need to login to Google Photos first!")
-        return redirect(url_for('login'))
-
-    for file in files:
-        file_name = file.filename
-        # Upload media to Google Photos
-        upload_token = upload_media_to_google_photos(service, file, file_name)
-        if upload_token:
-            create_media_item(service, upload_token, file_name)
-            flash(f'Successfully uploaded {file_name} to Google Photos!')
-
-def upload_media_to_google_photos(service, file, file_name):
-    upload_url = "https://photoslibrary.googleapis.com/v1/uploads"
-    headers = {
-        "Authorization": f"Bearer {service._http.credentials.token}",
-        "Content-Type": "application/octet-stream",
-        "X-Goog-Upload-File-Name": file_name,
-        "X-Goog-Upload-Protocol": "raw",
-    }
-    response = requests.post(upload_url, headers=headers, data=file.read())
-    if response.status_code == 200:
-        return response.text  # Upload token
-    else:
-        flash(f"Failed to upload {file_name} to Google Photos")
-        return None
-    
-def create_media_item(service, upload_token, file_name):
-    new_media_item = {
-        "newMediaItems": [
-            {
-                "simpleMediaItem": {
-                    "uploadToken": upload_token
-                }
-            }
-        ]
-    }
-    service.mediaItems().batchCreate(body=new_media_item).execute()
 
 @app.route('/login')
 def login():
@@ -142,11 +86,19 @@ def oauth_callback():
 def google_upload():
     if 'credentials' not in session:
         return redirect(url_for('login'))
-    
+
     google_signed_in = session.get('google_signed_in', False)
     if request.method == 'POST':
         files = request.files.getlist('file')
-        upload_to_google_photos(files)
+        credentials = session['credentials']
+        for file in files:
+            if file:
+                file_name = secure_filename(file.filename)
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
+                file.save(file_path)
+                upload_file_to_google_photos.delay(file_path, file_name, credentials)
+
+        flash('Files are being processed and will be uploaded to Google Photos shortly!')
 
     return render_template('google_upload.html', google_signed_in=google_signed_in)
 
