@@ -26,8 +26,8 @@ if google_credentials:
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Configure Celery
-app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
-app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
+app.config['CELERY_BROKER_URL'] = app.config['REDIS_URL']
+app.config['CELERY_RESULT_BACKEND'] = app.config['REDIS_URL']
 celery = make_celery(app)
 
 # OAuth Scopes for Google Photos API
